@@ -301,7 +301,7 @@ app.delete("/admin/files/:index/:id", checkAdmin, async (req, res) => {
   }
 });
 
-// [MỚI] Admin Delete Multiple
+// [ĐÃ FIX] API Xóa nhiều file an toàn (Bỏ qua lỗi lẻ tẻ)
 app.post("/admin/delete-multiple", checkAdmin, async (req, res) => {
   try {
     const { fileIds } = req.body;
@@ -311,14 +311,34 @@ app.post("/admin/delete-multiple", checkAdmin, async (req, res) => {
         .json({ success: false, message: "Dữ liệu không hợp lệ" });
     }
 
-    // Xóa song song
-    const promises = fileIds.map((id) => drive.files.delete({ fileId: id }));
-    await Promise.all(promises);
+    let successCount = 0;
+    let failCount = 0;
 
-    res.json({ success: true, message: `Đã xóa ${fileIds.length} file.` });
+    // Xử lý xóa từng file và bắt lỗi riêng để không chết cả chùm
+    const deletePromises = fileIds.map(async (id) => {
+      try {
+        await drive.files.delete({ fileId: id });
+        successCount++;
+      } catch (err) {
+        // Chỉ log lỗi ra console server để biết, không báo lỗi về client làm ngắt quãng
+        console.error(`Lỗi xóa file ${id}:`, err.message);
+        failCount++;
+      }
+    });
+
+    // Chờ tất cả chạy xong
+    await Promise.all(deletePromises);
+
+    // Luôn trả về success = true nếu code chạy xong (dù có file lỗi)
+    res.json({
+      success: true,
+      message: `Đã xóa ${successCount} file. (Lỗi/Không tìm thấy: ${failCount})`,
+    });
   } catch (error) {
-    console.error("Lỗi xóa nhiều:", error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Lỗi hệ thống xóa nhiều:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Lỗi Server: " + error.message });
   }
 });
 
