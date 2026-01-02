@@ -237,6 +237,8 @@ app.get("/admin/stats-all", checkAdmin, async (req, res) => {
     const aboutRes = await drive.about.get({ fields: "storageQuota" });
     const quota = aboutRes.data.storageQuota;
 
+    console.log("GOOGLE QUOTA DATA:", quota);
+
     const limitBytes = parseInt(quota.limit) || 15 * 1024 * 1024 * 1024;
     const totalUsedBytes = parseInt(quota.usage) || 0;
 
