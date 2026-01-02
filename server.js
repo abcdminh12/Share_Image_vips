@@ -39,6 +39,33 @@ const getFolderId = (index = 0) => {
   return i === 1 ? process.env.FOLDER_ID_2 : process.env.FOLDER_ID_1;
 };
 
+// --- [MỚI] HÀM TÍNH TỔNG DUNG LƯỢNG FOLDER CHÍNH XÁC ---
+// Hàm này lặp qua toàn bộ file trong folder để cộng size lại
+async function calculateFolderSize(folderId) {
+  let totalBytes = 0;
+  let pageToken = null;
+  try {
+    do {
+      const res = await drive.files.list({
+        q: `'${folderId}' in parents and trashed = false`,
+        fields: "nextPageToken, files(size)",
+        pageSize: 1000,
+        pageToken: pageToken,
+      });
+
+      if (res.data.files) {
+        res.data.files.forEach((f) => {
+          if (f.size) totalBytes += parseInt(f.size);
+        });
+      }
+      pageToken = res.data.nextPageToken;
+    } while (pageToken);
+  } catch (e) {
+    console.error("Lỗi tính size folder:", e.message);
+  }
+  return totalBytes;
+}
+
 // --- API PUBLIC ---
 
 app.get("/", (req, res) => {
@@ -72,27 +99,36 @@ app.get("/files", async (req, res) => {
   }
 });
 
+// --- [CẬP NHẬT] API STATS (TRANG CHỦ) ---
+// Tính real-time folder size
 app.get("/stats", async (req, res) => {
   try {
     const folderId = getFolderId(req.query.index);
+
+    // 1. Đếm số file (nhanh)
     const listRes = await drive.files.list({
       q: `'${folderId}' in parents and trashed = false`,
       fields: "files(id)",
       pageSize: 1000,
     });
-    const aboutRes = await drive.about.get({ fields: "storageQuota" });
-    const quota = aboutRes.data.storageQuota;
 
-    const limit = parseInt(quota.limit) || 0;
-    const usage = parseInt(quota.usage) || 0;
-    const percent = limit > 0 ? ((usage / limit) * 100).toFixed(1) : 0;
+    // 2. Tính dung lượng thực tế
+    const usedBytes = await calculateFolderSize(folderId);
+
+    // Giả sử Limit là 15GB (Google Free) - Bạn có thể sửa số này
+    // Hoặc gọi API about để lấy limit chuẩn
+    const aboutRes = await drive.about.get({ fields: "storageQuota" });
+    const limitBytes =
+      parseInt(aboutRes.data.storageQuota.limit) || 15 * 1024 * 1024 * 1024;
+
+    const percent = ((usedBytes / limitBytes) * 100).toFixed(2);
 
     res.json({
       success: true,
       totalFiles: listRes.data.files?.length || 0,
       storage: {
-        used: (usage / 1024 / 1024 / 1024).toFixed(2),
-        total: (limit / 1024 / 1024 / 1024).toFixed(2),
+        used: (usedBytes / 1024 / 1024 / 1024).toFixed(2),
+        total: (limitBytes / 1024 / 1024 / 1024).toFixed(2),
         percent: percent,
       },
     });
@@ -207,29 +243,32 @@ const checkAdmin = (req, res, next) => {
   else res.status(401).json({ success: false, message: "Sai mật khẩu Admin" });
 };
 
-// Admin Stats
+// [CẬP NHẬT] Admin Stats - Tính toán chi tiết từng server
 app.get("/admin/stats-all", checkAdmin, async (req, res) => {
   try {
+    const servers = [];
+    const serverConfigs = [
+      { name: "Server VIP 1", id: process.env.FOLDER_ID_1 },
+      { name: "Server VIP 2", id: process.env.FOLDER_ID_2 },
+    ];
+
+    // Lấy limit chung
     const aboutRes = await drive.about.get({ fields: "storageQuota" });
-    const quota = aboutRes.data.storageQuota;
-    const limit = parseInt(quota.limit) || 0;
-    const usage = parseInt(quota.usage) || 0;
-    const percent = limit > 0 ? ((usage / limit) * 100).toFixed(1) : 0;
+    const limitBytes = parseInt(aboutRes.data.storageQuota.limit) || 1;
 
-    // Trả về data chung cho cả 2 server vì cùng 1 acc Google
-    const data = {
-      usedGB: (usage / 1024 / 1024 / 1024).toFixed(2),
-      totalGB: (limit / 1024 / 1024 / 1024).toFixed(2),
-      percent,
-    };
+    for (const sv of serverConfigs) {
+      // Tính dung lượng từng folder
+      const usedBytes = await calculateFolderSize(sv.id);
 
-    res.json({
-      success: true,
-      servers: [
-        { name: "Server VIP 1", ...data },
-        { name: "Server VIP 2", ...data },
-      ],
-    });
+      servers.push({
+        name: sv.name,
+        usedGB: (usedBytes / 1024 / 1024 / 1024).toFixed(2),
+        totalGB: (limitBytes / 1024 / 1024 / 1024).toFixed(2),
+        percent: ((usedBytes / limitBytes) * 100).toFixed(1),
+      });
+    }
+
+    res.json({ success: true, servers });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -239,7 +278,6 @@ app.get("/admin/stats-all", checkAdmin, async (req, res) => {
 app.get("/admin/files/:index", checkAdmin, async (req, res) => {
   try {
     const folderId = getFolderId(req.params.index);
-    // Cần thêm md5Checksum để tính năng Quét file trùng hoạt động
     const response = await drive.files.list({
       q: `'${folderId}' in parents and trashed = false`,
       fields:
@@ -253,12 +291,33 @@ app.get("/admin/files/:index", checkAdmin, async (req, res) => {
   }
 });
 
-// Admin Delete File
+// Admin Delete File (Single)
 app.delete("/admin/files/:index/:id", checkAdmin, async (req, res) => {
   try {
     await drive.files.delete({ fileId: req.params.id });
     res.json({ success: true });
   } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// [MỚI] Admin Delete Multiple
+app.post("/admin/delete-multiple", checkAdmin, async (req, res) => {
+  try {
+    const { fileIds } = req.body;
+    if (!fileIds || !Array.isArray(fileIds)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Dữ liệu không hợp lệ" });
+    }
+
+    // Xóa song song
+    const promises = fileIds.map((id) => drive.files.delete({ fileId: id }));
+    await Promise.all(promises);
+
+    res.json({ success: true, message: `Đã xóa ${fileIds.length} file.` });
+  } catch (error) {
+    console.error("Lỗi xóa nhiều:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
