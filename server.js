@@ -13,12 +13,14 @@ app.use(express.json());
 app.use(express.static(__dirname));
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+
+// Cấu hình Multer
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 },
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
 });
 
-// --- KẾT NỐI OAUTH2 (Thay thế Robot cũ) ---
+// --- KẾT NỐI OAUTH2 ---
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
@@ -37,7 +39,7 @@ const getFolderId = (index = 0) => {
   return i === 1 ? process.env.FOLDER_ID_2 : process.env.FOLDER_ID_1;
 };
 
-// --- CÁC API ---
+// --- API PUBLIC ---
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
@@ -65,8 +67,7 @@ app.get("/files", async (req, res) => {
     });
     res.json({ success: true, files: response.data.files });
   } catch (error) {
-    // THÊM DÒNG NÀY ĐỂ IN LỖI RA TERMINAL:
-    console.error("Lỗi lấy file:", error); 
+    console.error("Lỗi lấy list file:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -156,7 +157,6 @@ app.post("/upload-url", async (req, res) => {
     });
 
     let filename = `url_upload_${Date.now()}.jpg`;
-    // Logic lấy tên file đơn giản
     try {
       filename = url.split("/").pop().split("?")[0];
     } catch (e) {}
@@ -192,10 +192,99 @@ app.post("/upload-url", async (req, res) => {
   }
 });
 
-// Admin API rút gọn (Bạn có thể thêm lại logic Admin đầy đủ nếu cần)
+// --- API ADMIN ---
+
+// Login
 app.post("/admin/login", (req, res) => {
   if (req.body.password === ADMIN_PASSWORD) res.json({ success: true });
   else res.status(401).json({ success: false });
+});
+
+// Middleware xác thực Admin
+const checkAdmin = (req, res, next) => {
+  const token = req.headers["x-admin-pass"];
+  if (token === ADMIN_PASSWORD) next();
+  else res.status(401).json({ success: false, message: "Sai mật khẩu Admin" });
+};
+
+// Admin Stats
+app.get("/admin/stats-all", checkAdmin, async (req, res) => {
+  try {
+    const aboutRes = await drive.about.get({ fields: "storageQuota" });
+    const quota = aboutRes.data.storageQuota;
+    const limit = parseInt(quota.limit) || 0;
+    const usage = parseInt(quota.usage) || 0;
+    const percent = limit > 0 ? ((usage / limit) * 100).toFixed(1) : 0;
+
+    // Trả về data chung cho cả 2 server vì cùng 1 acc Google
+    const data = {
+      usedGB: (usage / 1024 / 1024 / 1024).toFixed(2),
+      totalGB: (limit / 1024 / 1024 / 1024).toFixed(2),
+      percent,
+    };
+
+    res.json({
+      success: true,
+      servers: [
+        { name: "Server VIP 1", ...data },
+        { name: "Server VIP 2", ...data },
+      ],
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Admin File List
+app.get("/admin/files/:index", checkAdmin, async (req, res) => {
+  try {
+    const folderId = getFolderId(req.params.index);
+    // Cần thêm md5Checksum để tính năng Quét file trùng hoạt động
+    const response = await drive.files.list({
+      q: `'${folderId}' in parents and trashed = false`,
+      fields:
+        "files(id, name, size, createdTime, mimeType, webViewLink, thumbnailLink, md5Checksum)",
+      pageSize: 1000,
+      orderBy: "createdTime desc",
+    });
+    res.json({ success: true, files: response.data.files });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Admin Delete File
+app.delete("/admin/files/:index/:id", checkAdmin, async (req, res) => {
+  try {
+    await drive.files.delete({ fileId: req.params.id });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Admin Rename
+app.post("/admin/rename", checkAdmin, async (req, res) => {
+  try {
+    const { fileId, newName } = req.body;
+    await drive.files.update({
+      fileId: fileId,
+      requestBody: { name: newName },
+    });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Admin Empty Trash
+app.post("/admin/empty-trash/:index", checkAdmin, async (req, res) => {
+  try {
+    await drive.files.emptyTrash();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
