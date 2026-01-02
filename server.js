@@ -14,13 +14,11 @@ app.use(express.static(__dirname));
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
-// Cấu hình Multer
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+  limits: { fileSize: 50 * 1024 * 1024 },
 });
 
-// --- KẾT NỐI OAUTH2 ---
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
@@ -33,14 +31,11 @@ oauth2Client.setCredentials({
 
 const drive = google.drive({ version: "v3", auth: oauth2Client });
 
-// --- LẤY ID THƯ MỤC ---
 const getFolderId = (index = 0) => {
   const i = parseInt(index);
   return i === 1 ? process.env.FOLDER_ID_2 : process.env.FOLDER_ID_1;
 };
 
-// --- [MỚI] HÀM TÍNH TỔNG DUNG LƯỢNG FOLDER CHÍNH XÁC ---
-// Hàm này lặp qua toàn bộ file trong folder để cộng size lại
 async function calculateFolderSize(folderId) {
   let totalBytes = 0;
   let pageToken = null;
@@ -65,8 +60,6 @@ async function calculateFolderSize(folderId) {
   }
   return totalBytes;
 }
-
-// --- API PUBLIC ---
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
@@ -99,24 +92,18 @@ app.get("/files", async (req, res) => {
   }
 });
 
-// --- [CẬP NHẬT] API STATS (TRANG CHỦ) ---
-// Tính real-time folder size
 app.get("/stats", async (req, res) => {
   try {
     const folderId = getFolderId(req.query.index);
 
-    // 1. Đếm số file (nhanh)
     const listRes = await drive.files.list({
       q: `'${folderId}' in parents and trashed = false`,
       fields: "files(id)",
       pageSize: 1000,
     });
 
-    // 2. Tính dung lượng thực tế
     const usedBytes = await calculateFolderSize(folderId);
 
-    // Giả sử Limit là 15GB (Google Free) - Bạn có thể sửa số này
-    // Hoặc gọi API about để lấy limit chuẩn
     const aboutRes = await drive.about.get({ fields: "storageQuota" });
     const limitBytes =
       parseInt(aboutRes.data.storageQuota.limit) || 15 * 1024 * 1024 * 1024;
@@ -228,22 +215,17 @@ app.post("/upload-url", async (req, res) => {
   }
 });
 
-// --- API ADMIN ---
-
-// Login
 app.post("/admin/login", (req, res) => {
   if (req.body.password === ADMIN_PASSWORD) res.json({ success: true });
   else res.status(401).json({ success: false });
 });
 
-// Middleware xác thực Admin
 const checkAdmin = (req, res, next) => {
   const token = req.headers["x-admin-pass"];
   if (token === ADMIN_PASSWORD) next();
   else res.status(401).json({ success: false, message: "Sai mật khẩu Admin" });
 };
 
-// [CẬP NHẬT] Admin Stats - Tính toán chi tiết từng server
 app.get("/admin/stats-all", checkAdmin, async (req, res) => {
   try {
     const servers = [];
@@ -252,29 +234,48 @@ app.get("/admin/stats-all", checkAdmin, async (req, res) => {
       { name: "Server VIP 2", id: process.env.FOLDER_ID_2 },
     ];
 
-    // Lấy limit chung
     const aboutRes = await drive.about.get({ fields: "storageQuota" });
-    const limitBytes = parseInt(aboutRes.data.storageQuota.limit) || 1;
+    const quota = aboutRes.data.storageQuota;
+
+    const limitBytes = parseInt(quota.limit) || 15 * 1024 * 1024 * 1024;
+    const totalUsedBytes = parseInt(quota.usage) || 0;
+
+    const driveUsedBytes = parseInt(quota.usageInDrive) || 0;
+    const trashUsedBytes = parseInt(quota.usageInDriveTrash) || 0;
+
+    const otherUsedBytes = Math.max(
+      0,
+      totalUsedBytes - driveUsedBytes - trashUsedBytes
+    );
 
     for (const sv of serverConfigs) {
-      // Tính dung lượng từng folder
-      const usedBytes = await calculateFolderSize(sv.id);
-
+      const folderUsedBytes = await calculateFolderSize(sv.id);
       servers.push({
         name: sv.name,
-        usedGB: (usedBytes / 1024 / 1024 / 1024).toFixed(2),
+        usedGB: (folderUsedBytes / 1024 / 1024 / 1024).toFixed(2),
         totalGB: (limitBytes / 1024 / 1024 / 1024).toFixed(2),
-        percent: ((usedBytes / limitBytes) * 100).toFixed(1),
+        percent: ((folderUsedBytes / limitBytes) * 100).toFixed(1),
       });
     }
 
-    res.json({ success: true, servers });
+    res.json({
+      success: true,
+      servers,
+      accountDetail: {
+        limitGB: (limitBytes / 1024 / 1024 / 1024).toFixed(2),
+        totalUsedGB: (totalUsedBytes / 1024 / 1024 / 1024).toFixed(2),
+        totalPercent: ((totalUsedBytes / limitBytes) * 100).toFixed(2),
+
+        driveMB: (driveUsedBytes / 1024 / 1024).toFixed(2),
+        trashMB: (trashUsedBytes / 1024 / 1024).toFixed(2),
+        otherMB: (otherUsedBytes / 1024 / 1024).toFixed(2),
+      },
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Admin File List
 app.get("/admin/files/:index", checkAdmin, async (req, res) => {
   try {
     const folderId = getFolderId(req.params.index);
@@ -291,7 +292,6 @@ app.get("/admin/files/:index", checkAdmin, async (req, res) => {
   }
 });
 
-// Admin Delete File (Single)
 app.delete("/admin/files/:index/:id", checkAdmin, async (req, res) => {
   try {
     await drive.files.delete({ fileId: req.params.id });
@@ -301,7 +301,6 @@ app.delete("/admin/files/:index/:id", checkAdmin, async (req, res) => {
   }
 });
 
-// [ĐÃ FIX] API Xóa nhiều file an toàn (Bỏ qua lỗi lẻ tẻ)
 app.post("/admin/delete-multiple", checkAdmin, async (req, res) => {
   try {
     const { fileIds } = req.body;
@@ -314,22 +313,18 @@ app.post("/admin/delete-multiple", checkAdmin, async (req, res) => {
     let successCount = 0;
     let failCount = 0;
 
-    // Xử lý xóa từng file và bắt lỗi riêng để không chết cả chùm
     const deletePromises = fileIds.map(async (id) => {
       try {
         await drive.files.delete({ fileId: id });
         successCount++;
       } catch (err) {
-        // Chỉ log lỗi ra console server để biết, không báo lỗi về client làm ngắt quãng
         console.error(`Lỗi xóa file ${id}:`, err.message);
         failCount++;
       }
     });
 
-    // Chờ tất cả chạy xong
     await Promise.all(deletePromises);
 
-    // Luôn trả về success = true nếu code chạy xong (dù có file lỗi)
     res.json({
       success: true,
       message: `Đã xóa ${successCount} file. (Lỗi/Không tìm thấy: ${failCount})`,
@@ -342,7 +337,6 @@ app.post("/admin/delete-multiple", checkAdmin, async (req, res) => {
   }
 });
 
-// Admin Rename
 app.post("/admin/rename", checkAdmin, async (req, res) => {
   try {
     const { fileId, newName } = req.body;
@@ -356,7 +350,6 @@ app.post("/admin/rename", checkAdmin, async (req, res) => {
   }
 });
 
-// Admin Empty Trash
 app.post("/admin/empty-trash/:index", checkAdmin, async (req, res) => {
   try {
     await drive.files.emptyTrash();
