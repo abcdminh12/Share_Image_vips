@@ -1047,6 +1047,30 @@
         text-decoration: underline;
       }
 
+      /* [MỚI] CSS cho Checkbox và Thanh công cụ xóa */
+      .custom-checkbox {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: var(--primary-color);
+      }
+      .bulk-actions {
+        display: none; /* Mặc định ẩn */
+        align-items: center;
+        gap: 10px;
+        background: rgba(255, 118, 117, 0.15);
+        padding: 8px 15px;
+        border-radius: 8px;
+        border: 1px solid var(--danger-color);
+        margin-left: 15px;
+        animation: fadeIn 0.3s ease;
+      }
+      .bulk-text {
+        font-weight: 700;
+        color: var(--danger-color);
+        font-size: 14px;
+      }
+
       @media (max-width: 600px) {
         .result-item {
           flex-direction: column;
@@ -1420,7 +1444,22 @@
             <button class="btn btn-theme" onclick="loadAdminFiles()">
               <i class="fa-solid fa-rotate"></i> Tải lại
             </button>
-            <button class="btn btn-scan" onclick="scanDuplicates()">
+
+            <div id="bulkActionBox" class="bulk-actions">
+              <span id="selectedCount" class="bulk-text">0 file</span>
+              <button
+                class="btn btn-delete-all btn-sm"
+                onclick="deleteSelectedFiles()"
+              >
+                <i class="fa-solid fa-trash-check"></i> Xóa đã chọn
+              </button>
+            </div>
+
+            <button
+              class="btn btn-scan"
+              onclick="scanDuplicates()"
+              style="margin-left: auto"
+            >
               <i class="fa-solid fa-magnifying-glass"></i> Quét file trùng
             </button>
 
@@ -1455,6 +1494,14 @@
             <table class="admin-table">
               <thead>
                 <tr>
+                  <th style="width: 40px; text-align: center">
+                    <input
+                      type="checkbox"
+                      id="selectAllBox"
+                      class="custom-checkbox"
+                      onchange="toggleSelectAll()"
+                    />
+                  </th>
                   <th>Tên File</th>
                   <th>Kích thước</th>
                   <th>Ngày tạo</th>
@@ -1516,6 +1563,8 @@
       // Biến lưu trữ file admin
       let adminFilesCache = [];
       let duplicateFiles = [];
+      // [MỚI] Biến chọn nhiều file
+      let selectedIds = new Set();
 
       // --- INIT ---
       initTheme();
@@ -1548,6 +1597,7 @@
           loadDriveFiles(false);
         } else {
           viewUpload.classList.remove("hidden");
+          loadStats(true); // Cập nhật lại stats ở trang chủ
         }
       }
 
@@ -1695,7 +1745,7 @@
       async function loadAdminFiles() {
         const index = adminServerSelect.value || 0;
         adminFileList.innerHTML =
-          '<tr><td colspan="4" style="text-align:center;">Đang tải dữ liệu từ Google Drive...</td></tr>';
+          '<tr><td colspan="5" style="text-align:center;">Đang tải dữ liệu từ Google Drive...</td></tr>';
         btnDeleteDup.style.display = "none";
         adminStatusMsg.innerText = "";
         duplicateFiles = [];
@@ -1708,7 +1758,7 @@
           const data = await res.json();
 
           if (!data.success) {
-            adminFileList.innerHTML = `<tr><td colspan="4" style="color:red;">Lỗi: ${data.message}</td></tr>`;
+            adminFileList.innerHTML = `<tr><td colspan="5" style="color:red;">Lỗi: ${data.message}</td></tr>`;
             return;
           }
 
@@ -1716,15 +1766,23 @@
           adminStatusMsg.innerHTML = `Tổng số file: ${adminFilesCache.length}`;
           renderAdminTable(adminFilesCache);
         } catch (error) {
-          adminFileList.innerHTML = `<tr><td colspan="4" style="color:red;">Lỗi kết nối Server</td></tr>`;
+          adminFileList.innerHTML = `<tr><td colspan="5" style="color:red;">Lỗi kết nối Server</td></tr>`;
         }
       }
 
+      // [CẬP NHẬT] Hàm render bảng để có checkbox
       function renderAdminTable(files) {
-        adminFileList.innerHTML = "";
+        const tbody = document.getElementById("adminFileList");
+        tbody.innerHTML = "";
+
+        // Reset trạng thái chọn khi load lại bảng
+        selectedIds.clear();
+        updateBulkUI();
+        document.getElementById("selectAllBox").checked = false;
+
         if (files.length === 0) {
-          adminFileList.innerHTML =
-            '<tr><td colspan="4" style="text-align:center;">Thư mục trống.</td></tr>';
+          tbody.innerHTML =
+            '<tr><td colspan="5" style="text-align:center;">Thư mục trống.</td></tr>';
           return;
         }
 
@@ -1738,33 +1796,124 @@
           tr.className = rowClass;
           tr.id = `row-${file.id}`;
 
-          // Thay đổi: onclick vào tên file sẽ gọi hàm viewAdminFile
-          // --- TÌM ĐOẠN NÀY TRONG renderAdminTable ---
           tr.innerHTML = `
-    <td>
-        <span class="admin-file-link" onclick="viewAdminFile('${file.id}')">
-                <i class="fa-solid fa-eye"></i> ${file.name}
-        </span>
-        ${isDup ? '<span class="dup-badge">Trùng lặp</span>' : ""}
-    </td>
-    <td>${sizeMB}</td>
-    <td>${date}</td>
-    <td>
-        <button class="btn btn-theme btn-sm" style="margin-right: 5px;" onclick="renameFile('${
-          file.id
-        }', '${file.name.replace(/'/g, "\\'")}')">
-            <i class="fa-solid fa-pen-to-square"></i> Sửa
-        </button>
-        
-        <button class="btn btn-clear btn-sm" onclick="deleteSingleFile('${
-          file.id
-        }')">
-            <i class="fa-solid fa-trash"></i> Xóa
-        </button>
-    </td>
-`;
-          adminFileList.appendChild(tr);
+            <td style="text-align: center;">
+                <input type="checkbox" class="custom-checkbox file-checkbox" 
+                       value="${file.id}" 
+                       onchange="toggleFile('${file.id}')">
+            </td>
+            <td>
+                <span class="admin-file-link" onclick="viewAdminFile('${
+                  file.id
+                }')">
+                        <i class="fa-solid fa-eye"></i> ${file.name}
+                </span>
+                ${isDup ? '<span class="dup-badge">Trùng lặp</span>' : ""}
+            </td>
+            <td>${sizeMB}</td>
+            <td>${date}</td>
+            <td>
+                <button class="btn btn-theme btn-sm" style="margin-right: 5px;" onclick="renameFile('${
+                  file.id
+                }', '${file.name.replace(/'/g, "\\'")}')">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                
+                <button class="btn btn-clear btn-sm" onclick="deleteSingleFile('${
+                  file.id
+                }')">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
         });
+      }
+
+      // --- [MỚI] LOGIC CHỌN NHIỀU ---
+      function toggleFile(id) {
+        if (selectedIds.has(id)) selectedIds.delete(id);
+        else selectedIds.add(id);
+        updateBulkUI();
+      }
+
+      function toggleSelectAll() {
+        const isChecked = document.getElementById("selectAllBox").checked;
+        const boxes = document.querySelectorAll(".file-checkbox");
+        selectedIds.clear();
+
+        boxes.forEach((box) => {
+          box.checked = isChecked;
+          if (isChecked) selectedIds.add(box.value);
+        });
+        updateBulkUI();
+      }
+
+      function updateBulkUI() {
+        const box = document.getElementById("bulkActionBox");
+        const label = document.getElementById("selectedCount");
+
+        if (selectedIds.size > 0) {
+          box.style.display = "flex";
+          label.innerText = `${selectedIds.size} file`;
+        } else {
+          box.style.display = "none";
+        }
+      }
+
+      // --- [MỚI] HÀM XỬ LÝ XÓA NHIỀU ---
+      async function deleteSelectedFiles() {
+        const count = selectedIds.size;
+        if (count === 0) return;
+
+        if (!confirm(`Bạn chắc chắn muốn XÓA VĨNH VIỄN ${count} file này?`))
+          return;
+
+        const btn = document.querySelector(".btn-delete-all");
+        const originalText =
+          '<i class="fa-solid fa-trash-check"></i> Xóa đã chọn';
+        btn.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin"></i> Đang xóa...';
+        btn.disabled = true;
+
+        try {
+          const res = await fetch(`${API_URL}/admin/delete-multiple`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-admin-pass": currentAdminToken,
+            },
+            body: JSON.stringify({ fileIds: Array.from(selectedIds) }),
+          });
+          const json = await res.json();
+
+          if (json.success) {
+            showToast(`Đã xóa ${count} file thành công!`, "success");
+
+            // Xóa UI ngay lập tức
+            selectedIds.forEach((id) => {
+              const row = document.getElementById(`row-${id}`);
+              if (row) row.remove();
+              // Xóa khỏi cache
+              adminFilesCache = adminFilesCache.filter((f) => f.id !== id);
+            });
+
+            // Reset UI
+            selectedIds.clear();
+            updateBulkUI();
+            document.getElementById("selectAllBox").checked = false;
+
+            // QUAN TRỌNG: Gọi cập nhật dung lượng Admin ngay
+            loadAdminData();
+          } else {
+            showToast("Lỗi: " + json.message, "error");
+          }
+        } catch (e) {
+          showToast("Lỗi kết nối!", "error");
+        } finally {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }
       }
 
       function viewAdminFile(fileId) {
@@ -1823,6 +1972,8 @@
             if (row) row.remove();
             // Cập nhật lại bộ nhớ tạm
             adminFilesCache = adminFilesCache.filter((f) => f.id !== fileId);
+            // Cập nhật dung lượng
+            loadAdminData();
             return true;
           } else {
             alert("Lỗi: " + data.message);
@@ -1902,6 +2053,7 @@
             // Xóa khỏi cache
             adminFilesCache = adminFilesCache.filter((f) => f.id !== fileId);
             showToast("Đã xóa file.");
+            loadAdminData(); // Cập nhật dung lượng ngay
           } else {
             showToast("Lỗi: " + data.message, "error");
           }
@@ -1952,7 +2104,10 @@
           '<i class="fa-solid fa-trash-can"></i> Xóa tất cả file trùng';
 
         showToast(`Đã xóa sạch ${count} file trùng lặp!`, "success");
-        setTimeout(loadAdminFiles, 1000); // Reload lại list cho sạch
+        setTimeout(() => {
+          loadAdminFiles();
+          loadAdminData();
+        }, 1000); // Reload lại list cho sạch
       }
 
       // --- CÁC HÀM CŨ (GIỮ NGUYÊN) ---
@@ -2688,6 +2843,3 @@
     </script>
   </body>
 </html>
-<!-- npm init
- npm install express multer googleapis cors
- npm install axios -->
