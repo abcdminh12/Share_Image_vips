@@ -1861,17 +1861,21 @@
         }
       }
 
-      // --- [MỚI] HÀM XỬ LÝ XÓA NHIỀU ---
+      // [ĐÃ FIX] Hàm xử lý xóa nhiều ở Client
       async function deleteSelectedFiles() {
         const count = selectedIds.size;
-        if (count === 0) return;
+        if (count === 0) {
+          showToast("Chưa chọn file nào!", "error");
+          return;
+        }
 
         if (!confirm(`Bạn chắc chắn muốn XÓA VĨNH VIỄN ${count} file này?`))
           return;
 
         const btn = document.querySelector(".btn-delete-all");
-        const originalText =
-          '<i class="fa-solid fa-trash-check"></i> Xóa đã chọn';
+        // Lưu lại nội dung nút cũ để restore sau khi xong
+        const originalContent = btn.innerHTML;
+
         btn.innerHTML =
           '<i class="fa-solid fa-spinner fa-spin"></i> Đang xóa...';
         btn.disabled = true;
@@ -1888,30 +1892,33 @@
           const json = await res.json();
 
           if (json.success) {
-            showToast(`Đã xóa ${count} file thành công!`, "success");
+            showToast(json.message, "success"); // Hiện thông báo chi tiết (Thành công/Lỗi)
 
-            // Xóa UI ngay lập tức
+            // Xóa các dòng đã chọn khỏi bảng
             selectedIds.forEach((id) => {
               const row = document.getElementById(`row-${id}`);
               if (row) row.remove();
-              // Xóa khỏi cache
+              // Xóa khỏi bộ nhớ đệm
               adminFilesCache = adminFilesCache.filter((f) => f.id !== id);
             });
 
-            // Reset UI
+            // Reset trạng thái chọn
             selectedIds.clear();
             updateBulkUI();
-            document.getElementById("selectAllBox").checked = false;
+            const selectAllBox = document.getElementById("selectAllBox");
+            if (selectAllBox) selectAllBox.checked = false;
 
-            // QUAN TRỌNG: Gọi cập nhật dung lượng Admin ngay
+            // Cập nhật lại thanh dung lượng ngay lập tức
             loadAdminData();
           } else {
             showToast("Lỗi: " + json.message, "error");
           }
         } catch (e) {
-          showToast("Lỗi kết nối!", "error");
+          console.error(e);
+          showToast("Lỗi kết nối Server!", "error");
         } finally {
-          btn.innerHTML = originalText;
+          // Trả lại nút bấm như cũ
+          btn.innerHTML = originalContent;
           btn.disabled = false;
         }
       }
