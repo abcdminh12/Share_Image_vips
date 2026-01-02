@@ -14,7 +14,6 @@
     />
     <style>
       :root {
-        /* Light Theme Variables */
         --primary-color: #6c5ce7;
         --primary-gradient: linear-gradient(135deg, #6c5ce7, #a29bfe);
         --bg-overlay: rgba(255, 255, 255, 0.65);
@@ -33,7 +32,6 @@
       }
 
       [data-theme="dark"] {
-        /* Dark Theme Variables */
         --primary-color: #a29bfe;
         --primary-gradient: linear-gradient(135deg, #6c5ce7, #4834d4);
         --bg-overlay: rgba(0, 0, 0, 0.6);
@@ -212,6 +210,7 @@
         font-size: 24px;
         background: var(--primary-gradient);
         -webkit-background-clip: text;
+        background-clip: text;
         -webkit-text-fill-color: transparent;
       }
 
@@ -1516,10 +1515,8 @@
     </div>
 
     <script>
-      // --- CẤU HÌNH API ---
       const API_URL = "";
 
-      // --- DOM ELEMENTS ---
       const fileInput = document.getElementById("fileInput");
       const dropZone = document.getElementById("dropZone");
       const resultList = document.getElementById("resultList");
@@ -1529,7 +1526,6 @@
       const elCountDrive = document.getElementById("count-drive");
       const urlInput = document.getElementById("urlInput");
 
-      // ELEMENTS KHÁC
       const viewUpload = document.getElementById("view-upload");
       const viewGallery = document.getElementById("view-gallery");
       const viewAdmin = document.getElementById("view-admin");
@@ -1542,39 +1538,31 @@
       const adminPassInput = document.getElementById("adminPassInput");
       const adminGrid = document.getElementById("adminGrid");
 
-      // ADMIN MANAGER ELEMENTS
       const adminServerSelect = document.getElementById("adminServerSelect");
       const adminFileList = document.getElementById("adminFileList");
       const adminStatusMsg = document.getElementById("adminStatusMsg");
       const btnDeleteDup = document.getElementById("btnDeleteDup");
 
-      // ADMIN PREVIEW MODAL
       const adminPreviewModal = document.getElementById("adminPreviewModal");
       const adminPreviewTitle = document.getElementById("adminPreviewTitle");
       const adminPreviewContent = document.getElementById(
         "adminPreviewContent"
       );
 
-      // --- VARIABLES ---
       let autoRefreshInterval = null;
       let lastDataSignature = null;
       let currentAdminToken = "";
 
-      // Biến lưu trữ file admin
       let adminFilesCache = [];
       let duplicateFiles = [];
-      // [MỚI] Biến chọn nhiều file
+
       let selectedIds = new Set();
 
-      // --- INIT ---
       initTheme();
       createSnow();
       loadServers();
 
-      // --- FUNCTIONS ---
-
       function switchView(viewName) {
-        // Nếu đã đăng nhập Admin, chỉ cho phép ở lại view admin
         if (currentAdminToken !== "" && viewName !== "admin") {
           showToast(
             "Bạn phải 'Thoát Admin' trước khi chuyển sang mục khác!",
@@ -1583,7 +1571,6 @@
           return;
         }
 
-        // Các logic ẩn/hiện cũ...
         viewUpload.classList.add("hidden");
         viewGallery.classList.add("hidden");
         viewAdmin.classList.add("hidden");
@@ -1597,11 +1584,10 @@
           loadDriveFiles(false);
         } else {
           viewUpload.classList.remove("hidden");
-          loadStats(true); // Cập nhật lại stats ở trang chủ
+          loadStats(true);
         }
       }
 
-      // [ADMIN NEW] Logic Admin
       function openAdminModal() {
         adminPassModal.style.display = "flex";
         adminPassInput.value = "";
@@ -1610,7 +1596,7 @@
 
       function closeAdminModal() {
         adminPassModal.style.display = "none";
-        // Reset nút đăng nhập về trạng thái ban đầu
+
         const loginBtn = document.querySelector(
           "#adminPassModal .btn-warehouse"
         );
@@ -1678,12 +1664,11 @@
         currentAdminToken = "";
 
         localStorage.removeItem("adminToken");
-        // Hiện lại các nút ở Header
+
         document.querySelector(".btn-admin").style.display = "flex";
         document.querySelector(".btn-warehouse").style.display = "flex";
         document.querySelector(".btn-export").style.display = "flex";
 
-        // Đảm bảo nút trong Modal đăng nhập cũng được reset
         const loginBtn = document.querySelector(
           "#adminPassModal .btn-warehouse"
         );
@@ -1696,6 +1681,7 @@
       }
 
       async function loadAdminData() {
+        const adminGrid = document.getElementById("adminGrid");
         adminGrid.innerHTML =
           '<div style="grid-column:1/-1; text-align:center;"><div class="spinner" style="margin:0 auto; width:40px; height:40px; border-color:var(--primary-color); border-top-color:transparent;"></div></div>';
 
@@ -1707,40 +1693,83 @@
 
           if (json.success) {
             adminGrid.innerHTML = "";
+
+            if (json.accountDetail) {
+              const d = json.accountDetail;
+              const detailCard = document.createElement("div");
+              detailCard.className = "admin-card";
+
+              detailCard.style.background =
+                "linear-gradient(145deg, #2d3436, #000000)";
+              detailCard.style.color = "white";
+              detailCard.style.gridColumn = "1 / -1";
+
+              detailCard.innerHTML = `
+                  <h3 style="color: #00b894; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom:10px; margin-bottom: 15px;">
+                    <i class="fa-brands fa-google"></i> BỘ NHỚ TÀI KHOẢN GỐC
+                  </h3>
+                  
+                  <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:center;">
+                      <div style="flex:1; min-width: 200px;">
+                          <div style="font-size: 14px; opacity:0.8;">Đã dùng / Tổng cộng</div>
+                          <div style="font-size: 32px; font-weight:bold; color:#00b894;">
+                              ${d.totalUsedGB} <span style="font-size:16px; color:#b2bec3;">GB</span> 
+                              <span style="font-size:16px; color:#636e72;"> / ${d.limitGB} GB</span>
+                          </div>
+                          <div class="storage-bar-bg" style="height: 12px; background: rgba(255,255,255,0.1); margin-top:10px;">
+                              <div class="storage-bar-fill" style="width: ${d.totalPercent}%; background: linear-gradient(90deg, #00b894, #00cec9);"></div>
+                          </div>
+                          <div style="margin-top:5px; font-size:12px; color:#00b894;">Đang chiếm ${d.totalPercent}%</div>
+                      </div>
+
+                      <div style="flex:1; min-width: 200px; background: rgba(255,255,255,0.05); padding:15px; border-radius:12px;">
+                          <div style="margin-bottom:10px; display:flex; justify-content:space-between; border-bottom:1px dashed rgba(255,255,255,0.1); padding-bottom:5px;">
+                              <span><i class="fa-brands fa-google-drive" style="color:#0984e3;"></i> Google Drive</span>
+                              <span style="font-weight:bold;">${d.driveMB} MB</span>
+                          </div>
+                          <div style="margin-bottom:10px; display:flex; justify-content:space-between; border-bottom:1px dashed rgba(255,255,255,0.1); padding-bottom:5px;">
+                              <span><i class="fa-solid fa-trash" style="color:#ff7675;"></i> Thùng rác Drive</span>
+                              <span style="font-weight:bold; color:#ff7675;">${d.trashMB} MB</span>
+                          </div>
+                          <div style="display:flex; justify-content:space-between;">
+                              <span><i class="fa-solid fa-envelope" style="color:#fdcb6e;"></i> Gmail & Photos</span>
+                              <span style="font-weight:bold; color:#fdcb6e;">${d.otherMB} MB</span>
+                          </div>
+                      </div>
+                  </div>
+              `;
+              adminGrid.appendChild(detailCard);
+            }
+
             json.servers.forEach((sv) => {
               let color = "var(--success-color)";
-              if (sv.percent > 70) color = "#fdcb6e"; // warning
-              if (sv.percent > 90) color = "var(--danger-color)"; // danger
+              if (sv.percent > 70) color = "#fdcb6e";
+              if (sv.percent > 90) color = "var(--danger-color)";
 
               const card = document.createElement("div");
               card.className = "admin-card";
               card.innerHTML = `
-                          <h3><i class="fa-solid fa-server"></i> ${sv.name}</h3>
-                          <div class="admin-stat-row">
-                              <span>Đã dùng:</span>
-                              <span style="font-weight:700">${sv.usedGB} GB</span>
-                          </div>
-                          <div class="admin-stat-row">
-                              <span>Tổng dung lượng:</span>
-                              <span style="font-weight:700">${sv.totalGB} GB</span>
-                          </div>
-                          <div class="storage-bar-bg" style="height: 10px; margin: 15px 0;">
-                              <div class="storage-bar-fill" style="width: ${sv.percent}%; background: ${color};"></div>
-                          </div>
-                          <div style="text-align:right; font-size:12px; font-weight:bold; color:${color}">
-                              ${sv.percent}% Full
-                          </div>
-                      `;
+                  <h3><i class="fa-solid fa-folder"></i> ${sv.name}</h3>
+                  <div class="admin-stat-row">
+                      <span>Dung lượng Folder:</span>
+                      <span style="font-weight:700">${sv.usedGB} GB</span>
+                  </div>
+                   <div class="storage-bar-bg" style="height: 8px; margin: 15px 0;">
+                      <div class="storage-bar-fill" style="width: ${sv.percent}%; background: ${color};"></div>
+                  </div>
+                  <div style="text-align:right; font-size:12px; font-weight:bold; color:${color}">
+                      Chiếm ${sv.percent}% Acc
+                  </div>
+              `;
               adminGrid.appendChild(card);
             });
           }
         } catch (e) {
+          console.error(e);
           adminGrid.innerHTML =
             '<p style="color:red; text-align:center;">Lỗi tải dữ liệu Admin!</p>';
         }
       }
-
-      // --- [ADMIN NEW] LOGIC QUẢN LÝ FILE ---
 
       async function loadAdminFiles() {
         const index = adminServerSelect.value || 0;
@@ -1770,12 +1799,10 @@
         }
       }
 
-      // [CẬP NHẬT] Hàm render bảng để có checkbox
       function renderAdminTable(files) {
         const tbody = document.getElementById("adminFileList");
         tbody.innerHTML = "";
 
-        // Reset trạng thái chọn khi load lại bảng
         selectedIds.clear();
         updateBulkUI();
         document.getElementById("selectAllBox").checked = false;
@@ -1830,7 +1857,6 @@
         });
       }
 
-      // --- [MỚI] LOGIC CHỌN NHIỀU ---
       function toggleFile(id) {
         if (selectedIds.has(id)) selectedIds.delete(id);
         else selectedIds.add(id);
@@ -1861,7 +1887,6 @@
         }
       }
 
-      // [ĐÃ FIX] Hàm xử lý xóa nhiều ở Client
       async function deleteSelectedFiles() {
         const count = selectedIds.size;
         if (count === 0) {
@@ -1873,7 +1898,7 @@
           return;
 
         const btn = document.querySelector(".btn-delete-all");
-        // Lưu lại nội dung nút cũ để restore sau khi xong
+
         const originalContent = btn.innerHTML;
 
         btn.innerHTML =
@@ -1892,23 +1917,20 @@
           const json = await res.json();
 
           if (json.success) {
-            showToast(json.message, "success"); // Hiện thông báo chi tiết (Thành công/Lỗi)
+            showToast(json.message, "success");
 
-            // Xóa các dòng đã chọn khỏi bảng
             selectedIds.forEach((id) => {
               const row = document.getElementById(`row-${id}`);
               if (row) row.remove();
-              // Xóa khỏi bộ nhớ đệm
+
               adminFilesCache = adminFilesCache.filter((f) => f.id !== id);
             });
 
-            // Reset trạng thái chọn
             selectedIds.clear();
             updateBulkUI();
             const selectAllBox = document.getElementById("selectAllBox");
             if (selectAllBox) selectAllBox.checked = false;
 
-            // Cập nhật lại thanh dung lượng ngay lập tức
             loadAdminData();
           } else {
             showToast("Lỗi: " + json.message, "error");
@@ -1917,7 +1939,6 @@
           console.error(e);
           showToast("Lỗi kết nối Server!", "error");
         } finally {
-          // Trả lại nút bấm như cũ
           btn.innerHTML = originalContent;
           btn.disabled = false;
         }
@@ -1931,13 +1952,12 @@
         adminPreviewContent.innerHTML =
           '<div class="spinner" style="border-color:var(--primary-color); border-top-color:transparent; margin: 50px auto;"></div>';
 
-        // Cập nhật sự kiện cho nút xóa trong modal
         const btnDelete = document.getElementById("btnDeleteInModal");
         btnDelete.onclick = async () => {
           if (confirm(`Bạn chắc chắn muốn xóa vĩnh viễn file: ${file.name}?`)) {
             const success = await performDeleteInModal(file.id);
             if (success) {
-              closeAdminPreview(); // Đóng modal sau khi xóa thành công
+              closeAdminPreview();
               showToast("Đã xóa file thành công!");
             }
           }
@@ -1960,7 +1980,6 @@
         adminPreviewModal.style.display = "flex";
       }
 
-      // Hàm hỗ trợ xóa dùng riêng cho Modal
       async function performDeleteInModal(fileId) {
         const serverIndex =
           document.getElementById("adminServerSelect").value || 0;
@@ -1969,17 +1988,16 @@
             `${API_URL}/admin/files/${serverIndex}/${fileId}`,
             {
               method: "DELETE",
-              headers: { "x-admin-pass": currentAdminToken }, // Sử dụng token admin đã đăng nhập
+              headers: { "x-admin-pass": currentAdminToken },
             }
           );
           const data = await res.json();
           if (data.success) {
-            // Xóa dòng tương ứng trong bảng danh sách phía dưới
             const row = document.getElementById(`row-${fileId}`);
             if (row) row.remove();
-            // Cập nhật lại bộ nhớ tạm
+
             adminFilesCache = adminFilesCache.filter((f) => f.id !== fileId);
-            // Cập nhật dung lượng
+
             loadAdminData();
             return true;
           } else {
@@ -2006,7 +2024,6 @@
         const map = new Map();
         duplicateFiles = [];
 
-        // 1. Nhóm file theo MD5
         adminFilesCache.forEach((file) => {
           if (file.md5Checksum) {
             if (!map.has(file.md5Checksum)) {
@@ -2016,12 +2033,11 @@
           }
         });
 
-        // 2. Tìm file thừa
         let groupCount = 0;
         map.forEach((group) => {
           if (group.length > 1) {
             groupCount++;
-            // Sort: Cũ nhất (index 0) giữ lại, Mới hơn xóa đi
+
             group.sort(
               (a, b) => new Date(a.createdTime) - new Date(b.createdTime)
             );
@@ -2035,7 +2051,7 @@
         if (duplicateFiles.length > 0) {
           adminStatusMsg.innerHTML = `<span style="color:var(--warning-color)">⚠️ Tìm thấy ${duplicateFiles.length} file thừa (trong ${groupCount} nhóm trùng nội dung).</span>`;
           btnDeleteDup.style.display = "inline-flex";
-          renderAdminTable(adminFilesCache); // Render lại để tô màu
+          renderAdminTable(adminFilesCache);
         } else {
           showToast("Không tìm thấy file trùng lặp!");
           adminStatusMsg.innerHTML =
@@ -2057,10 +2073,10 @@
           if (data.success) {
             const row = document.getElementById(`row-${fileId}`);
             if (row) row.remove();
-            // Xóa khỏi cache
+
             adminFilesCache = adminFilesCache.filter((f) => f.id !== fileId);
             showToast("Đã xóa file.");
-            loadAdminData(); // Cập nhật dung lượng ngay
+            loadAdminData();
           } else {
             showToast("Lỗi: " + data.message, "error");
           }
@@ -2084,7 +2100,6 @@
         let count = 0;
         const index = adminServerSelect.value;
 
-        // Xóa từng cái
         for (const file of duplicateFiles) {
           try {
             const res = await fetch(
@@ -2114,10 +2129,9 @@
         setTimeout(() => {
           loadAdminFiles();
           loadAdminData();
-        }, 1000); // Reload lại list cho sạch
+        }, 1000);
       }
 
-      // --- CÁC HÀM CŨ (GIỮ NGUYÊN) ---
       async function loadDriveFiles(isSilent = false) {
         if (!isSilent && !lastDataSignature) {
           historyGrid.innerHTML =
@@ -2224,11 +2238,9 @@
         div.style.animationDelay = "0.1s";
         let thumbHTML = "";
 
-        // Tạo Link Download gốc (Chất lượng cao nhất)
         const downloadLink = `https://drive.google.com/uc?export=download&id=${item.id}`;
 
         if (item.type === "image") {
-          // Vẫn dùng thumbnail s10000 để hiển thị xem trước cho nét
           thumbHTML = `<img src="${item.directImageLink}" class="thumb-img" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='https://cdn-icons-png.flaticon.com/512/3342/3342137.png'" />`;
         } else if (item.type === "video") {
           const poster = item.thumb
@@ -2294,7 +2306,6 @@
         modalLinks.innerHTML = "";
         modalPreview.innerHTML = "";
 
-        // Tạo Link Download gốc
         const downloadLink = `https://drive.google.com/uc?export=download&id=${item.id}`;
 
         let linkXemContent = item.playerLink;
@@ -2329,7 +2340,6 @@
           item.driveLink
         );
 
-        // ĐÃ SỬA: Thêm Link Tải Về vào Modal
         if (item.type === "image") {
           modalLinks.innerHTML += createInputRow(
             "Link Tải Về (Full HD/Gốc)",
@@ -2415,17 +2425,16 @@
         document.getElementById("theme-icon").className =
           t === "dark" ? "fa-solid fa-sun" : "fa-solid fa-moon";
       }
-      // --- 1. HIỆU ỨNG TUYẾT RƠI VIP ---
+
       function createSnow() {
         const container = document.getElementById("snow-container");
-        container.innerHTML = ""; // Clear cũ
-        const count = 50; // Tăng số lượng
+        container.innerHTML = "";
+        const count = 50;
 
         for (let i = 0; i < count; i++) {
           const flake = document.createElement("div");
           flake.className = "snowflake";
 
-          // Thông số ngẫu nhiên
           const size = Math.random() * 6 + 2;
           const opacity = Math.random() * 0.7 + 0.3;
           const duration = Math.random() * 10 + 10;
@@ -2446,26 +2455,21 @@
         }
       }
 
-      // --- 2. TỰ ĐỘNG KHÔI PHỤC TRẠNG THÁI ADMIN ---
       async function autoCheckAdmin() {
         const savedToken = localStorage.getItem("adminToken");
         if (savedToken) {
-          // Điền mật khẩu vào input để logic verifyAdmin() cũ xử lý
           adminPassInput.value = savedToken;
-          // Gọi xác thực ngầm
+
           await verifyAdmin();
-          // Sau khi verify xong, nếu thành công nó sẽ tự chuyển view Admin
         }
       }
 
-      // --- CẬP NHẬT LẠI INIT ---
       window.onload = () => {
         initTheme();
         createSnow();
         loadServers();
       };
 
-      // --- OPTIONAL: THÊM HIỆU ỨNG CHỮ CHẠY CHO TIÊU ĐỀ ---
       const title = document.querySelector(".title");
       title.innerHTML = title.innerText
         .split("")
@@ -2477,7 +2481,6 @@
         )
         .join("");
 
-      // Thêm keyframe wave vào style nếu muốn tiêu đề nhảy múa
       function saveHistory(i) {
         let l = JSON.parse(localStorage.getItem("uploadHistory")) || [];
         l = l.filter((x) => x.id !== i.id);
@@ -2504,7 +2507,6 @@
         }
       }
 
-      // --- EVENTS ---
       document.addEventListener("paste", function (event) {
         if (viewUpload.classList.contains("hidden")) return;
         const items = (event.clipboardData || event.originalEvent.clipboardData)
@@ -2522,7 +2524,7 @@
           handleFiles(files);
         }
       });
-      // [ADMIN NEW] Listen Enter on Password Input
+
       adminPassInput.addEventListener("keypress", function (event) {
         if (event.key === "Enter") {
           verifyAdmin();
@@ -2754,7 +2756,6 @@
           return;
         }
 
-        // Hiển thị loading
         showToast("Đang dọn dẹp thùng rác...", "success");
 
         try {
@@ -2769,7 +2770,7 @@
 
           if (data.success) {
             showToast(`Đã dọn sạch thùng rác của ${serverName}!`, "success");
-            // Cập nhật lại thống kê dung lượng vì dọn rác xong dung lượng sẽ giảm
+
             loadAdminData();
           } else {
             showToast("Lỗi: " + data.error, "error");
@@ -2778,12 +2779,10 @@
           showToast("Lỗi kết nối server", "error");
         }
       }
-      // --- HÀM ĐỔI TÊN FILE VÀ ĐỒNG BỘ DRIVE ---
+
       async function renameFile(fileId, currentName) {
-        // 1. Hỏi tên mới
         const newName = prompt("Nhập tên mới cho file:", currentName);
 
-        // Nếu bấm hủy hoặc tên rỗng hoặc tên giống cũ thì dừng
         if (
           newName === null ||
           newName.trim() === "" ||
@@ -2791,11 +2790,9 @@
         )
           return;
 
-        // 2. Lấy Server hiện tại
         const serverIndex =
           document.getElementById("adminServerSelect").value || 0;
 
-        // 3. Hiển thị loading nhẹ bằng cách đổi text nút (hoặc toast)
         showToast("Đang đổi tên trên Drive...", "info");
 
         try {
@@ -2803,7 +2800,7 @@
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "x-admin-pass": currentAdminToken, // Quan trọng: Gửi kèm pass admin
+              "x-admin-pass": currentAdminToken,
             },
             body: JSON.stringify({
               fileId: fileId,
@@ -2817,21 +2814,16 @@
           if (data.success) {
             showToast("Đổi tên thành công!", "success");
 
-            // 4. Cập nhật giao diện ngay lập tức (Không cần load lại trang)
-            // Tìm file trong cache
             const file = adminFilesCache.find((f) => f.id === fileId);
             if (file) file.name = newName.trim();
 
-            // Tìm dòng trong bảng để sửa text hiển thị
             const row = document.getElementById(`row-${fileId}`);
             if (row) {
-              // Cập nhật text hiển thị tên
               const nameSpan = row.querySelector(".admin-file-link");
               if (nameSpan)
                 nameSpan.innerHTML = `<i class="fa-solid fa-eye"></i> ${newName.trim()}`;
 
-              // Cập nhật lại nút sửa để nếu bấm lại nó hiện tên mới
-              const editBtn = row.querySelectorAll("button")[0]; // Nút đầu tiên là sửa
+              const editBtn = row.querySelectorAll("button")[0];
               editBtn.setAttribute(
                 "onclick",
                 `renameFile('${fileId}', '${newName
