@@ -71,7 +71,6 @@
         transition: background var(--transition-speed);
       }
 
-      /* SNOW EFFECT */
       #snow-container {
         position: fixed;
         top: 0;
@@ -82,7 +81,7 @@
         z-index: 0;
         overflow: hidden;
       }
-      /* --- HIỆU ỨNG TUYẾT RƠI CHÂN THỰC --- */
+
       .snowflake {
         position: fixed;
         top: -10px;
@@ -90,7 +89,7 @@
         border-radius: 50%;
         pointer-events: none;
         z-index: 0;
-        filter: blur(1px); /* Tạo độ mềm cho tuyết */
+        filter: blur(1px);
         animation: fall linear infinite, sway ease-in-out infinite;
       }
 
@@ -107,10 +106,9 @@
         }
         50% {
           margin-left: 50px;
-        } /* Tuyết bay chéo nhẹ */
+        }
       }
 
-      /* --- ANIMATION MƯỢT MÀ CHO TOÀN WEB --- */
       .view-section {
         animation: slideInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
       }
@@ -126,7 +124,6 @@
         }
       }
 
-      /* Hiệu ứng hiện lần lượt cho các Card */
       .stat-card,
       .history-card,
       .result-item {
@@ -139,7 +136,6 @@
         background: var(--glass-bg);
       }
 
-      /* Nút bấm hiệu ứng Ripple giả */
       .btn {
         position: relative;
         overflow: hidden;
@@ -150,7 +146,6 @@
         transform: scale(0.95);
       }
 
-      /* Modal mượt mà hơn */
       .modal-content {
         animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
       }
@@ -166,9 +161,8 @@
         }
       }
 
-      /* Input focus xịn xò */
       .url-input:focus {
-        width: 105%; /* Giãn nhẹ khi focus */
+        width: 105%;
         border-color: var(--primary-color);
         background: white;
       }
@@ -181,7 +175,6 @@
         z-index: 1;
       }
 
-      /* HEADER */
       .header-actions {
         display: flex;
         justify-content: space-between;
@@ -209,12 +202,11 @@
         font-weight: 700;
         font-size: 24px;
         background: var(--primary-gradient);
-        -webkit-background-clip: text;
         background-clip: text;
+        -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
       }
 
-      /* SERVER SELECT CSS */
       .server-select {
         padding: 8px 12px;
         border-radius: 8px;
@@ -283,7 +275,6 @@
         height: auto;
       }
 
-      /* BUTTON KHO */
       .btn-warehouse {
         background: linear-gradient(135deg, #fd79a8, #e84393);
         color: white;
@@ -295,7 +286,6 @@
         color: white;
       }
 
-      /* EXPORT BUTTON STYLE */
       .btn-export {
         background: rgba(9, 132, 227, 0.15);
         color: #0984e3;
@@ -306,7 +296,6 @@
         transform: translateY(-2px);
       }
 
-      /* ADMIN BUTTON */
       .btn-admin {
         background: rgba(45, 52, 54, 0.1);
         color: var(--text-color);
@@ -316,7 +305,6 @@
         color: var(--input-bg);
       }
 
-      /* STATS DASHBOARD */
       .stats-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -370,7 +358,6 @@
         margin-top: 2px;
       }
 
-      /* STORAGE BAR CSS */
       .storage-bar-bg {
         width: 100%;
         height: 6px;
@@ -415,7 +402,6 @@
         background: linear-gradient(135deg, #0984e3, #74b9ff);
       }
 
-      /* URL UPLOAD BOX */
       .url-upload-section {
         background: var(--glass-bg);
         border: 1px solid var(--glass-border);
@@ -459,7 +445,6 @@
         box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
       }
 
-      /* UPLOAD BOX */
       .upload-box {
         background: var(--glass-bg);
         border: 2px dashed var(--primary-color);
@@ -492,7 +477,7 @@
       .upload-box p {
         color: var(--text-secondary);
       }
-      /* Paste Hint */
+
       .paste-hint {
         margin-top: 15px;
         font-size: 13px;
@@ -504,7 +489,6 @@
         font-weight: 600;
       }
 
-      /* RESULT HEADER CSS */
       .result-header {
         display: flex;
         justify-content: space-between;
@@ -516,7 +500,6 @@
         font-weight: 600;
       }
 
-      /* RESULT ITEM */
       .result-item {
         background: var(--glass-bg);
         border: 1px solid var(--glass-border);
@@ -540,7 +523,6 @@
         }
       }
 
-      /* HISTORY GRID STYLE */
       .history-section-title {
         margin: 0 0 20px;
         font-size: 24px;
@@ -596,7 +578,6 @@
         font-size: 12px;
       }
 
-      /* MODAL POPUP STYLE */
       .modal-overlay {
         position: fixed;
         inset: 0;
@@ -677,7 +658,6 @@
         object-fit: contain;
       }
 
-      /* THUMBNAILS & MEDIA */
       .thumb-col {
         width: 150px;
         flex-shrink: 0;
@@ -700,7 +680,6 @@
         background: rgba(0, 0, 0, 0.05);
       }
 
-      /* Video Lazy Load */
       .video-placeholder {
         width: 150px;
         height: 150px;
@@ -749,7 +728,6 @@
         border-color: var(--primary-color);
       }
 
-      /* VIDEO BUTTONS STYLE */
       .video-controls {
         margin-top: 10px;
         display: flex;
@@ -785,7 +763,6 @@
         background: linear-gradient(135deg, #ff512f, #dd2476);
       }
 
-      /* Audio Style */
       .audio-icon-box {
         display: flex;
         flex-direction: column;
@@ -797,7 +774,6 @@
         border: 2px solid var(--glass-border);
       }
 
-      /* LINKS INPUTS */
       .links-col {
         flex-grow: 1;
         display: flex;
@@ -853,7 +829,6 @@
         transform: scale(1.1);
       }
 
-      /* TOAST & LOADING */
       #toast-container {
         position: fixed;
         top: 20px;
@@ -930,7 +905,6 @@
         }
       }
 
-      /* Helper Classes */
       .view-section {
         transition: opacity 0.3s ease;
       }
@@ -938,7 +912,6 @@
         display: none !important;
       }
 
-      /* [ADMIN NEW] CSS CHO ADMIN VIEW */
       .admin-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -970,7 +943,6 @@
         margin-bottom: 8px;
       }
 
-      /* ADMIN MANAGER TABLE STYLES */
       .admin-manager-box {
         margin-top: 30px;
         background: var(--glass-bg);
@@ -1020,7 +992,7 @@
         background: rgba(255, 255, 255, 0.1);
       }
       .duplicate-row {
-        background-color: rgba(253, 203, 110, 0.2); /* Vàng nhạt */
+        background-color: rgba(253, 203, 110, 0.2);
       }
       .duplicate-row:hover td {
         background-color: rgba(253, 203, 110, 0.3);
@@ -1046,7 +1018,6 @@
         text-decoration: underline;
       }
 
-      /* [MỚI] CSS cho Checkbox và Thanh công cụ xóa */
       .custom-checkbox {
         width: 18px;
         height: 18px;
@@ -1054,7 +1025,7 @@
         accent-color: var(--primary-color);
       }
       .bulk-actions {
-        display: none; /* Mặc định ẩn */
+        display: none;
         align-items: center;
         gap: 10px;
         background: rgba(255, 118, 117, 0.15);
@@ -1515,7 +1486,7 @@
     </div>
 
     <script>
-      const API_URL = "";
+      const API_URL = "http://localhost:3000";
 
       const fileInput = document.getElementById("fileInput");
       const dropZone = document.getElementById("dropZone");
@@ -1680,8 +1651,18 @@
         showToast("Đã thoát chế độ Admin");
       }
 
+      function formatBytes(bytes, decimals = 2) {
+        if (!+bytes) return "0 Bytes";
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${
+          sizes[i]
+        }`;
+      }
+
       async function loadAdminData() {
-        const adminGrid = document.getElementById("adminGrid");
         adminGrid.innerHTML =
           '<div style="grid-column:1/-1; text-align:center;"><div class="spinner" style="margin:0 auto; width:40px; height:40px; border-color:var(--primary-color); border-top-color:transparent;"></div></div>';
 
@@ -1693,72 +1674,79 @@
 
           if (json.success) {
             adminGrid.innerHTML = "";
-
-            if (json.accountDetail) {
-              const d = json.accountDetail;
-              const detailCard = document.createElement("div");
-              detailCard.className = "admin-card";
-
-              detailCard.style.background =
-                "linear-gradient(145deg, #2d3436, #000000)";
-              detailCard.style.color = "white";
-              detailCard.style.gridColumn = "1 / -1";
-
-              detailCard.innerHTML = `
-                  <h3 style="color: #00b894; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom:10px; margin-bottom: 15px;">
-                    <i class="fa-brands fa-google"></i> BỘ NHỚ TÀI KHOẢN GỐC
-                  </h3>
-                  
-                  <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:center;">
-                      <div style="flex:1; min-width: 200px;">
-                          <div style="font-size: 14px; opacity:0.8;">Đã dùng / Tổng cộng</div>
-                          <div style="font-size: 32px; font-weight:bold; color:#00b894;">
-                              ${d.totalUsedGB} <span style="font-size:16px; color:#b2bec3;">GB</span> 
-                              <span style="font-size:16px; color:#636e72;"> / ${d.limitGB} GB</span>
-                          </div>
-                          <div class="storage-bar-bg" style="height: 12px; background: rgba(255,255,255,0.1); margin-top:10px;">
-                              <div class="storage-bar-fill" style="width: ${d.totalPercent}%; background: linear-gradient(90deg, #00b894, #00cec9);"></div>
-                          </div>
-                          <div style="margin-top:5px; font-size:12px; color:#00b894;">Đang chiếm ${d.totalPercent}%</div>
-                      </div>
-
-                      <div style="flex:1; min-width: 200px; background: rgba(255,255,255,0.05); padding:15px; border-radius:12px;">
-                          <div style="margin-bottom:10px; display:flex; justify-content:space-between; border-bottom:1px dashed rgba(255,255,255,0.1); padding-bottom:5px;">
-                              <span><i class="fa-brands fa-google-drive" style="color:#0984e3;"></i> Google Drive</span>
-                              <span style="font-weight:bold;">${d.driveMB} MB</span>
-                          </div>
-                          <div style="margin-bottom:10px; display:flex; justify-content:space-between; border-bottom:1px dashed rgba(255,255,255,0.1); padding-bottom:5px;">
-                              <span><i class="fa-solid fa-trash" style="color:#ff7675;"></i> Thùng rác Drive</span>
-                              <span style="font-weight:bold; color:#ff7675;">${d.trashMB} MB</span>
-                          </div>
-                          <div style="display:flex; justify-content:space-between;">
-                              <span><i class="fa-solid fa-envelope" style="color:#fdcb6e;"></i> Gmail & Photos</span>
-                              <span style="font-weight:bold; color:#fdcb6e;">${d.otherMB} MB</span>
-                          </div>
-                      </div>
-                  </div>
-              `;
-              adminGrid.appendChild(detailCard);
-            }
-
             json.servers.forEach((sv) => {
-              let color = "var(--success-color)";
-              if (sv.percent > 70) color = "#fdcb6e";
-              if (sv.percent > 90) color = "var(--danger-color)";
+              const limit = sv.bytes_Limit;
+              const total = sv.bytes_Total;
+
+              const safeLimit = limit > 0 ? limit : 1;
+
+              const p1 = (sv.bytes_Web / safeLimit) * 100;
+              const p2 = (sv.bytes_OtherDrive / safeLimit) * 100;
+              const p3 = (sv.bytes_Gmail / safeLimit) * 100;
+
+              const totalPercent = ((total / safeLimit) * 100).toFixed(2);
 
               const card = document.createElement("div");
               card.className = "admin-card";
+
               card.innerHTML = `
-                  <h3><i class="fa-solid fa-folder"></i> ${sv.name}</h3>
-                  <div class="admin-stat-row">
-                      <span>Dung lượng Folder:</span>
-                      <span style="font-weight:700">${sv.usedGB} GB</span>
+                  <h3 style="border-bottom:1px solid var(--glass-border); padding-bottom:10px; margin-bottom:15px;">
+                     <i class="fa-solid fa-server"></i> ${sv.name}
+                  </h3>
+
+                  <div style="margin-bottom:10px; font-size:13px; font-weight:600; color:var(--text-secondary)">
+                      Chi tiết tài nguyên (Data thật):
                   </div>
-                   <div class="storage-bar-bg" style="height: 8px; margin: 15px 0;">
-                      <div class="storage-bar-fill" style="width: ${sv.percent}%; background: ${color};"></div>
+
+                  <div style="display:flex; height:12px; border-radius:6px; overflow:hidden; background:rgba(0,0,0,0.1); margin-bottom:15px;">
+                      <div style="width:${p1}%; background:#6c5ce7;" title="Web: ${formatBytes(
+                sv.bytes_Web
+              )}"></div>
+                      <div style="width:${p2}%; background:#0984e3;" title="Drive Khác: ${formatBytes(
+                sv.bytes_OtherDrive
+              )}"></div>
+                      <div style="width:${p3}%; background:#fab1a0;" title="Gmail: ${formatBytes(
+                sv.bytes_Gmail
+              )}"></div>
                   </div>
-                  <div style="text-align:right; font-size:12px; font-weight:bold; color:${color}">
-                      Chiếm ${sv.percent}% Acc
+
+                  <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+                      
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <div style="display:flex; align-items:center; gap:8px;">
+                              <span style="width:10px; height:10px; background:#6c5ce7; border-radius:2px;"></span>
+                              <span>Web Upload</span>
+                          </div>
+                          <strong style="color:#6c5ce7">${formatBytes(
+                            sv.bytes_Web
+                          )}</strong>
+                      </div>
+
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <div style="display:flex; align-items:center; gap:8px;">
+                              <span style="width:10px; height:10px; background:#0984e3; border-radius:2px;"></span>
+                              <span>File Drive Khác</span>
+                          </div>
+                          <strong>${formatBytes(sv.bytes_OtherDrive)}</strong>
+                      </div>
+
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <div style="display:flex; align-items:center; gap:8px;">
+                              <span style="width:10px; height:10px; background:#fab1a0; border-radius:2px;"></span>
+                              <span>Gmail & Photos</span>
+                          </div>
+                          <strong>${formatBytes(sv.bytes_Gmail)}</strong>
+                      </div>
+
+                  </div>
+
+                  <div style="border-top:1px dashed var(--glass-border); margin-top:15px; padding-top:10px; display:flex; justify-content:space-between; align-items:center;">
+                      <span style="font-size:12px; font-weight:700; color:var(--text-secondary)">TỔNG ĐÃ DÙNG</span>
+                      <span style="font-weight:800; color:var(--text-color)">
+                        ${formatBytes(total)} / ${formatBytes(
+                limit
+              )} (${totalPercent}%)
+                      </span>
                   </div>
               `;
               adminGrid.appendChild(card);
@@ -1767,7 +1755,7 @@
         } catch (e) {
           console.error(e);
           adminGrid.innerHTML =
-            '<p style="color:red; text-align:center;">Lỗi tải dữ liệu Admin!</p>';
+            '<p style="color:red; text-align:center;">Lỗi hiển thị!</p>';
         }
       }
 
@@ -2839,6 +2827,80 @@
           showToast("Lỗi kết nối Server", "error");
         }
       }
+
+      (function () {
+        const URL_ANH =
+          "https://cdn.pixabay.com/animation/2024/04/25/19/52/19-52-51-662_512.gif";
+        const KICH_THUOC = 110;
+        const MAX_TOC_DO = 1.5;
+        const DO_NGHIENG_MAX = 25;
+        const DO_MUOT_XOAY = 0.02;
+
+        const bee = document.createElement("img");
+        bee.src = URL_ANH;
+
+        Object.assign(bee.style, {
+          position: "fixed",
+          width: KICH_THUOC + "px",
+          height: "auto",
+          zIndex: "999999",
+          pointerEvents: "none",
+          left: "0px",
+          top: "0px",
+          willChange: "transform",
+          transition: "none",
+        });
+
+        document.body.appendChild(bee);
+
+        let x = window.innerWidth / 2;
+        let y = window.innerHeight / 2;
+
+        let vx = 0;
+        let vy = 0;
+
+        let currentAngle = 0;
+        let facing = 1;
+
+        function animate() {
+          vx += (Math.random() - 0.5) * 0.4;
+          vy += (Math.random() - 0.5) * 0.4;
+
+          const speed = Math.sqrt(vx * vx + vy * vy);
+          if (speed > MAX_TOC_DO) {
+            vx = (vx / speed) * MAX_TOC_DO;
+            vy = (vy / speed) * MAX_TOC_DO;
+          }
+
+          x += vx;
+          y += vy;
+
+          const margin = 50;
+          if (x < margin) vx += 0.15;
+          if (x > window.innerWidth - margin - KICH_THUOC) vx -= 0.15;
+          if (y < margin) vy += 0.15;
+          if (y > window.innerHeight - margin - KICH_THUOC) vy -= 0.15;
+
+          if (Math.abs(vx) > 0.2) {
+            facing = vx < 0 ? 1 : -1;
+          }
+
+          let targetAngle = vy * 8;
+
+          if (targetAngle > DO_NGHIENG_MAX) targetAngle = DO_NGHIENG_MAX;
+          if (targetAngle < -DO_NGHIENG_MAX) targetAngle = -DO_NGHIENG_MAX;
+
+          if (facing === -1) targetAngle = -targetAngle;
+
+          currentAngle += (targetAngle - currentAngle) * DO_MUOT_XOAY;
+
+          bee.style.transform = `translate(${x}px, ${y}px) scaleX(${facing}) rotate(${currentAngle}deg)`;
+
+          requestAnimationFrame(animate);
+        }
+
+        animate();
+      })();
     </script>
   </body>
 </html>
